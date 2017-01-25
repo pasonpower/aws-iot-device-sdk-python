@@ -107,13 +107,13 @@ class mqttCore:
     def on_connect(self, client, userdata, flags, rc):
         self._disconnectResultCode = sys.maxsize
         self._connectResultCode = rc
-        if self._connectResultCode == 0:  # If this is a successful connect, do resubscribe
-            processResubscription = threading.Thread(target=self._doResubscribe)
-            processResubscription.start()
-        # If we do not have any topics to resubscribe to, still start a new thread to process queued publish requests
-        if not self._subscribePool:
-            offlinePublishQueueDraining = threading.Thread(target=self._doPublishDraining)
-            offlinePublishQueueDraining.start()
+        if self._connectResultCode == 0:
+            if self._subscribePool: # If this is a successful connect, do resubscribe
+                processResubscription = threading.Thread(target=self._doResubscribe)
+                processResubscription.start()
+            else: # If we do not have any topics to resubscribe to, still start a new thread to process queued publish requests
+                offlinePublishQueueDraining = threading.Thread(target=self._doPublishDraining)
+                offlinePublishQueueDraining.start()
         self._log.debug("Connect result code " + str(rc))
 
     def on_disconnect(self, client, userdata, rc):
